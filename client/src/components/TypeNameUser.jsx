@@ -36,6 +36,19 @@ function TypeNameUser() {
     }
 
     socket.emit("new_user", { username });
+
+    // Safety timeout in case backend is offline or unreachable
+    setTimeout(() => {
+      setIsLoading((loading) => {
+        if (loading) {
+          setErrorMessage(
+            "Could not connect to server. Please verify backend is running on port 5000."
+          );
+          return false;
+        }
+        return false;
+      });
+    }, 4000);
   };
 
   useEffect(() => {
@@ -54,9 +67,19 @@ function TypeNameUser() {
       setIsJoined(true);
     };
 
+    const handleConnectError = () => {
+      setIsLoading(false);
+      setErrorMessage(
+        "Connection error: Cannot reach WebSocket server at http://localhost:5000"
+      );
+    };
+
     socket.on("info_message", handleInfoMessage);
+    socket.on("connect_error", handleConnectError);
+
     return () => {
       socket.off("info_message", handleInfoMessage);
+      socket.off("connect_error", handleConnectError);
     };
   }, [inputValue]);
 
